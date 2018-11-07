@@ -1,7 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using SalesWebMvc.Data;
+using SalesWebMvc.Exception;
 using SalesWebMvc.Models;
 
 namespace SalesWebMvc.Services
@@ -15,15 +18,15 @@ namespace SalesWebMvc.Services
             _context = context;
         }
 
-        public List<Seller> FindAll()
+        public async Task<List<Seller>> FindAllAsync()
         {
-            return _context.Seller.ToList();
+            return await _context.Seller.ToListAsync();
         }
 
-        public void Insert(Seller seller)
+        public async Task InsertAsync(Seller seller)
         {
-            _context.Add(seller);
-            _context.SaveChanges();
+            await _context.AddAsync(seller);
+            await _context.SaveChangesAsync();
         }
 
         public Seller FindById(int id)
@@ -33,9 +36,33 @@ namespace SalesWebMvc.Services
 
         public void Remove(int id)
         {
-            var seller = _context.Seller.Find(id);
-            _context.Seller.Remove(seller);
-            _context.SaveChanges();
+            try
+            {
+                var seller = _context.Seller.Find(id);
+
+                _context.Seller.Remove(seller);
+                _context.SaveChanges();
+            }
+            catch (DbUpdateException e)
+            {
+               throw  new IntegrityException(e.Message);
+            }
+        }
+
+        public void Update(Seller seller)
+        {
+            if (!_context.Seller.Any(x => x.Id == seller.Id))
+                throw new NotFoundException("Id not found!");
+
+            try
+            {
+                _context.Update(seller);
+                _context.SaveChanges();
+            }
+            catch (DbConcurrencyException ex)
+            {
+                throw new DbConcurrencyException("Error: " + ex.Message);
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿@model Seller
+﻿@model SellerFormViewModel
 
 @{
     ViewData["Title"] = "Delete";
@@ -12,39 +12,39 @@
     <hr />
     <dl class="dl-horizontal">
         <dt>
-            @Html.DisplayNameFor(model => model.Name)
+            @Html.DisplayNameFor(model => model.Seller.Name)
         </dt>
         <dd>
-            @Html.DisplayFor(model => model.Name)
+            @Html.DisplayFor(model => model.Seller.Name)
         </dd>
         <dt>
-            @Html.DisplayNameFor(model => model.Email)
+            @Html.DisplayNameFor(model => model.Seller.Email)
         </dt>
         <dd>
-            @Html.DisplayFor(model => model.Email)
+            @Html.DisplayFor(model => model.Seller.Email)
         </dd>
         <dt>
-            @Html.DisplayNameFor(model => model.BaseSalary)
+            @Html.DisplayNameFor(model => model.Seller.BaseSalary)
         </dt>
         <dd>
-            @Html.DisplayFor(model => model.BaseSalary)
+            @Html.DisplayFor(model => model.Seller.BaseSalary)
         </dd>
         <dt>
-            @Html.DisplayNameFor(model => model.BirthDate)
+            @Html.DisplayNameFor(model => model.Seller.BirthDate)
         </dt>
         <dd>
-            @Html.DisplayFor(model => model.BirthDate)
+            @Html.DisplayFor(model => model.Seller.BirthDate)
         </dd>
         <dt>
-            @Html.DisplayNameFor(model => model.Department)
+            @Html.DisplayNameFor(model => model.Seller.Department)
         </dt>
         <dd>
-            @Html.DisplayFor(model => model.Department.Id)
+            @Html.DisplayFor(model => model.Seller.Department.Id)
         </dd>
     </dl>
     
     <form asp-action="Delete">
-        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="Seller.Id" />
         <input type="submit" value="Delete" class="btn btn-default" /> |
         <a asp-action="Index">Back to List</a>
     </form>

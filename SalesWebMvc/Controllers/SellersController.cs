@@ -1,4 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using SalesWebMvc.Exception;
 using SalesWebMvc.Models;
 using SalesWebMvc.Models.ViewModels;
 using SalesWebMvc.Services;
@@ -16,20 +20,15 @@ namespace SalesWebMvc.Controllers
             _departmentService = departmentService;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            var sellers = _sellerService.FindAll();
+            var sellers = await _sellerService.FindAllAsync();
             return View(sellers);
         }
 
         public IActionResult Details(int? id)
         {
-            return FindSellerById(id);
-        }
-
-        public IActionResult Edit(int id)
-        {
-            return View();
+            return FindSellerByIdReturnView(id);
         }
 
         public IActionResult Create()
@@ -42,36 +41,91 @@ namespace SalesWebMvc.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Seller seller)
+        public async Task<IActionResult> Create(Seller seller)
         {
-            _sellerService.Insert(seller);
+            if (!ModelState.IsValid)
+                return IsNotValid(seller);
+
+            await _sellerService.InsertAsync(seller);
             return RedirectToAction(nameof(Index));
         }
 
         public IActionResult Delete(int? id)
         {
-            return FindSellerById(id);
-        }
-
-        private IActionResult FindSellerById(int? id)
-        {
-            if (id == null)
-                NotFound();
-
-            var seller = _sellerService.FindById(id.Value);
-
-            if (seller == null)
-                NotFound();
-
-            return View(seller);
+            return FindSellerByIdReturnView(id);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Delete(int id)
         {
-            _sellerService.Remove(id);
-            return RedirectToAction(nameof(Index));
+            try
+            {
+                _sellerService.Remove(id);
+                return RedirectToAction(nameof(Index));
+            }
+            catch (IntegrityException e)
+            {
+                return RedirectToAction(nameof(Error), new { message = e.Message });
+            }
+        }
+
+        public IActionResult Edit(int? id)
+        {
+            return FindSellerByIdReturnView(id);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Edit([Bind("Id,Name,Email,BaseSalary,BirthDate,DepartmentId")] Seller seller)
+        {
+            if (!ModelState.IsValid)
+                return IsNotValid(seller);
+
+            try
+            {
+                _sellerService.Update(seller);
+                return RedirectToAction(nameof(Index));
+            }
+            catch (ApplicationException ex)
+            {
+                return RedirectToAction(nameof(Error), new { message = ex.Message });
+            }
+        }
+
+        public IActionResult Error(string message)
+        {
+            var errorViewModel = new ErrorViewModel
+            {
+                Message = message,
+                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+            };
+
+            return View(errorViewModel);
+        }
+
+        private IActionResult IsNotValid(Seller seller)
+        {
+            var departments = _departmentService.FindAll();
+            var viewModel = new SellerFormViewModel { Departments = departments, Seller = seller };
+
+            return View(viewModel);
+        }
+
+        private IActionResult FindSellerByIdReturnView(int? id)
+        {
+            if (id == null)
+                return RedirectToAction(nameof(Error), new { message = "Id not provided" });
+
+            var seller = _sellerService.FindById(id.Value);
+
+            if (seller == null)
+                return RedirectToAction(nameof(Error), new { message = "Id not found" });
+
+            var departments = _departmentService.FindAll();
+            var sellerFormViewModel = new SellerFormViewModel { Departments = departments, Seller = seller };
+
+            return View(sellerFormViewModel);
         }
     }
 }
